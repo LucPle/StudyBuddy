@@ -1,13 +1,7 @@
 import numpy as np
-<<<<<<< HEAD
 import cv2  # opencv
 
-xml = 'haarcascade_frontalface_default.xml' 
-=======
-import cv2
-
 xml = 'haarcascade_frontalface_default.xml'
->>>>>>> 1ec1e19ccc4f076b0e68bc13fe69e3765974bd55
 face_cascade = cv2.CascadeClassifier(xml)
 
 cap = cv2.VideoCapture(0)
