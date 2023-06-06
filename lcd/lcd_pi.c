@@ -78,7 +78,7 @@ void *lcd_Display(void *arg)
                         done=1;
                         ClrLcd();
 				        lcdLoc(LINE1);
-                        typeln("Set Timer: 0m"); // Write the text on the LCD
+                        typeln("Set Timer: 0min"); // Write the text on the LCD
                     }   
                     }
             }
@@ -86,7 +86,7 @@ void *lcd_Display(void *arg)
             {
                 done=0;
                 lcdLoc(LINE1);
-                char buffer[16]; // Adjust the buffer size as per your LCD module's requirements
+                char buffer[17]; // Adjust the buffer size as per your LCD module's requirements
                 snprintf(buffer, sizeof(buffer), "%02d:%02d", minutes, seconds);
                 typeln(buffer); // Replace 'lcd_write_text()' with the appropriate function from your LCD library
 
@@ -116,6 +116,7 @@ void *buttonHandler(void *arg)
         button2State = GPIORead(BUTTON2);
         button3State = GPIORead(BUTTON3);
         button4State = GPIORead(BUTTON4);
+        usleep(10000); 
         pthread_mutex_unlock(&lock);
 	
 
@@ -128,12 +129,14 @@ void *buttonHandler(void *arg)
                 pthread_mutex_lock(&lock);
                 // Increment the timer minutes
                 timerMinutes+=1;
-                pthread_mutex_unlock(&lock);
                 usleep(10000);
+                pthread_mutex_unlock(&lock);
 
+                ClrLcd();
+    
 				lcdLoc(LINE1);
-                char buffer[16]; // Adjust the buffer size as per your LCD module's requirements
-                snprintf(buffer, sizeof(buffer), "Set Timer: %dm", timerMinutes);
+                char buffer[17]; // Adjust the buffer size as per your LCD module's requirements
+                snprintf(buffer, sizeof(buffer), "Set Timer: %dmin", timerMinutes);
                 typeln(buffer); // Write the text on the LCD
             }
         }
@@ -145,12 +148,17 @@ void *buttonHandler(void *arg)
                 pthread_mutex_lock(&lock);
                 // Decrement the timer minutes
                 timerMinutes-=1;
-                pthread_mutex_unlock(&lock);
                 usleep(10000);
+                pthread_mutex_unlock(&lock);
+                
+                if(timerMinutes<10)
+                {
+                    ClrLcd();
+                    }
 
 				lcdLoc(LINE1);
-                char buffer[16]; // Adjust the buffer size as per your LCD module's requirements
-                snprintf(buffer, sizeof(buffer), "Set Timer: %dm", timerMinutes);
+                char buffer[17]; // Adjust the buffer size as per your LCD module's requirements
+                snprintf(buffer, sizeof(buffer), "Set Timer: %dmin", timerMinutes);
                 typeln(buffer); // Write the text on the LCD
             }
         }
@@ -178,7 +186,7 @@ void *buttonHandler(void *arg)
                 timerMinutes = 0;
 				ClrLcd();
 				lcdLoc(LINE1);
-                typeln("Set Timer: 0m"); // Write the text on the LCD
+                typeln("Set Timer: 0min"); // Write the text on the LCD
 			}
             // Button 4 is pressed
             if (isTimerSet == 1)
@@ -194,7 +202,7 @@ void *buttonHandler(void *arg)
                 ClrLcd(); // Clear the LCD display using the appropriate function from your LCD library
 
 				lcdLoc(LINE1);
-                typeln("Set Timer: 0m");
+                typeln("Set Timer: 0min");
             }
         }
 
@@ -219,7 +227,7 @@ int main(int argc, char *argv[])
     lcd_init(); // Replace with the initialization function provided by your LCD library
 
 	lcdLoc(LINE1);
-    typeln("Set Timer: 0m");
+    typeln("Set Timer: 0min");
     // Create the button thread
     if (pthread_create(&buttonThread, NULL, buttonHandler, NULL) != 0||pthread_create(&lcdThread, NULL, lcd_Display, NULL)!=0)
     {
