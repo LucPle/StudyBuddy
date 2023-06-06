@@ -14,6 +14,9 @@
 #include <wiringPi.h>
 #include <lcd.h>
 #include <time.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
 #include <pthread.h> // Include the pthread library for multi-threading
 
 #include "gpio.h"
@@ -115,7 +118,7 @@ void*client_1(void*arg){//다인님
     return NULL;
 }
 void*client_2(void*arg){//지영님
-    int clientfd=*((int*)arg)
+    int clientfd=*((int*)arg);
     int prev=0;
     char startmsg[2]="1";
     char endmsg[2]="0";
