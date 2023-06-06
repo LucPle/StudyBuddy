@@ -86,7 +86,7 @@ void*client_1(void*arg){//다인님
                     fprintf(stderr, "Failed to join LCD thread.\n");
                     return 4;
                 }
-	            if (pthread_detach(buttonThread, NULL) != 0)
+	            if (pthread_detach(buttonThread) != 0)
                 {
                     fprintf(stderr, "Failed to join button thread.\n");
                     return 4;
