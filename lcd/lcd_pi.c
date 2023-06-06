@@ -30,9 +30,175 @@
 int timerMinutes = 0;   // Variable to store the timer minutes set by the user
 int timerSeconds = 0;   // Variable to store the timer seconds remaining
 int isTimerSet = 0;     // Flag to indicate if the timer is set
+
+int client=0;
+
 pthread_mutex_t lock;  // Mutex lock to synchronize access to shared variables
 pthread_t buttonThread; // Thread for button handling
 pthread_t lcdThread;    // Thread for LCD display
+pthread_t client1;
+pthread_t client2;
+pthread_t client3;
+
+int state=0;
+
+int END1=0;
+int END2=0;
+int END3=0;
+
+
+int led[4]={26,19,13,6};
+
+void*client_1(void*arg){//다인님
+    int clientfd=*((int*)arg);
+    int cmd=0;
+    char startmsg[2];
+    char endmsg[2]="0";
+    char msg[2];
+    while(1){
+        if(END1&&state==0){
+            write(clientfd, endmsg, sizeof(endmsg));
+            END1=0;
+        }
+        if(!state){
+            ssize_t read_len=read(clientfd,startmsg,sizeof(startmsg));
+            if(read_len==-1){
+                perror("read() error");
+            }
+            if(strcmp(startmsg,"1")==0){
+                state=1;
+                lcdLoc(LINE1);
+                typeln("Welcome!");
+                sleep(1);
+                ClrLcd();
+                lcdLoc(LINE1);
+                typeln("Set Timer: 0min");
+
+                // Create the button thread
+                if (pthread_create(&buttonThread, NULL, buttonHandler, NULL) != 0||pthread_create(&lcdThread, NULL, lcd_Display, NULL)!=0)
+                {
+                    fprintf(stderr, "Failed to create button/lcd thread.\n");
+                    return 3;
+                }
+                    // Wait for the LCD thread to finish
+                if (pthread_join(lcdThread, NULL) != 0)
+                {
+                    fprintf(stderr, "Failed to join LCD thread.\n");
+                    return 4;
+                }
+	            if (pthread_detach(buttonThread, NULL) != 0)
+                {
+                    fprintf(stderr, "Failed to join button thread.\n");
+                    return 4;
+                }
+            }   
+        }
+        else if(state){
+            ssize_t read_len = read(clientfd, msg, sizeof(msg));
+            if(read_len==-1){
+                perror("read() error");
+            }
+            int light;
+            if(strcmp(msg,"1")==0)
+                light = 1;
+            else
+                light = 0;
+            
+            GPIOWrite(led[0], light);
+        }
+    }
+    pthread_mutex_lock(&lock);
+    client--;
+    pthread_mutex_unlock(&lock);
+    close(clientfd);
+    free(arg);
+    return NULL;
+}
+void*client_2(void*arg){//지영님
+    int clientfd=*((int*)arg)
+    int prev=0;
+    char startmsg[2]="1";
+    char endmsg[2]="0";
+    char msg[2];
+    while(1){
+        if(END2){
+            write(clientfd, endmsg, sizeof(endmsg));
+            prev=0;
+            END2=0;
+        }
+        if(state&&!prev){
+            write(clientfd, startmsg, sizeof(startmsg));
+            prev=1;
+        }
+        else if(state&&prev){
+            ssize_t read_len = read(clientfd, msg, sizeof(msg));
+            if(read_len==-1){
+                perror("read() error");
+            }
+            if(strcmp(msg,"0")==0){
+                GPIOWrite(led[1],0);
+                GPIOWrite(led[2],0);
+            }
+            else if(strcmp(msg,"1")==0){
+                GPIOWrite(led[1],1);
+                GPIOWrite(led[2],0);
+            }
+            else if(strcmp(msg,"2")==0){
+                GPIOWrite(led[1],0);
+                GPIOWrite(led[2],1);
+            }
+            else if(strcmp(msg,"3")==0){
+                GPIOWrite(led[1],1);
+                GPIOWrite(led[2],1);
+            }
+        }
+    }
+    pthread_mutex_lock(&lock);
+    client--;
+    pthread_mutex_unlock(&lock);
+    close(clientfd);
+    free(arg);
+    return NULL;
+
+}
+void*client_3(void*arg){//준서님
+    int clientfd=*((int*)arg);
+    int prev=0;
+    char startmsg[2]="1";
+    char endmsg[2]="0";
+    char msg[2];
+    while(1){
+        if(END3){
+            write(clientfd, endmsg, sizeof(endmsg));
+            prev=0;
+            END3=0;
+        }
+        if(state&&!prev){
+            write(clientfd, startmsg, sizeof(startmsg));
+            prev=1;
+        }
+        else if(state&&prev){
+            ssize_t read_len = read(clientfd, msg, sizeof(msg));
+            if(read_len==-1){
+                perror("read() error");
+            }
+            int light;
+            if(strcmp(msg,"1")==0)
+                light = 1;
+            else
+                light = 0;
+            
+            GPIOWrite(led[3], light);
+        }
+    }
+    pthread_mutex_lock(&lock);
+    client--;
+    pthread_mutex_unlock(&lock);
+    close(clientfd);
+    free(arg);
+    return NULL;
+
+}
 
 
 void *lcd_Display(void *arg)
@@ -59,6 +225,8 @@ void *lcd_Display(void *arg)
                 ClrLcd();
 				lcdLoc(LINE1);
                 typeln("Time is over"); // Replace 'lcd_write_text()' with the appropriate function from your LCD library
+                lcdLoc(LINE2);
+                typeln("PRESS BUTTON");
                 while(isTimeOver){
                     int button1State = 1;
         	        int button2State = 1;
@@ -78,7 +246,15 @@ void *lcd_Display(void *arg)
                         done=1;
                         ClrLcd();
 				        lcdLoc(LINE1);
-                        typeln("Set Timer: 0min"); // Write the text on the LCD
+                        typeln("THE END");
+                        sleep(1);
+                        ClrLcd();
+                        state=0;
+                        END1=1;
+                        END2=1;
+                        END3=1; 
+                        pthread_cancel(buttonThread);
+                        break;
                     }   
                     }
             }
@@ -104,6 +280,8 @@ void *lcd_Display(void *arg)
 
 void *buttonHandler(void *arg)
 {
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
     while (1)
     {
         pthread_mutex_lock(&lock);
@@ -206,7 +384,6 @@ void *buttonHandler(void *arg)
             }
         }
 
-        // Add some delay or debouncing mechanism here if needed
         usleep(10000); // Sleep for 100ms (adjust the delay as per your requirements)
     }
 
@@ -215,42 +392,93 @@ void *buttonHandler(void *arg)
 
 int main(int argc, char *argv[])
 {
-	int led[3]={26,19,13};
-	
+	if(argc!=2){
+        printf("Usage : %s <port>\n",argv[0]);
+    }
+
+	int listen_fd = socket(PF_INET, SOCK_STREAM, 0);
+    if(listen_fd == -1){
+        error_handling("socket() error");
+    }
+    struct sockaddr_in serv_addr; 
+    memset(&serv_addr, 0 , sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv_addr.sin_port = htons(atoi(argv[1]));
+
+    if(bind(listen_fd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
+        error_handling("bind() error");
+    }
+    if(listen(listen_fd,SOMAXCONN)==-1){
+        error_handling("listen() error");
+    }
+
 	if (-1 == GPIOExport(BUTTON4)|| -1 == GPIOExport(BUTTON1)||-1==GPIOExport(BUTTON2)||-1==GPIOExport(BUTTON3))
 		return(1);
 
 	if (-1 == GPIODirection(BUTTON4, IN)|| -1 == GPIODirection(BUTTON1, IN)||-1 == GPIODirection(BUTTON2, IN)||-1 == GPIODirection(BUTTON3, IN))
 		return(2);
 
-	// Initialize the LCD module
-    lcd_init(); // Replace with the initialization function provided by your LCD library
+    lcd_init(); 
 
-	lcdLoc(LINE1);
-    typeln("Set Timer: 0min");
-    // Create the button thread
-    if (pthread_create(&buttonThread, NULL, buttonHandler, NULL) != 0||pthread_create(&lcdThread, NULL, lcd_Display, NULL)!=0)
-    {
-        fprintf(stderr, "Failed to create button thread.\n");
-        return 3;
+    while(1){
+        struct sockaddr_in clientaddr;
+        socklen_t clientaddrlen=sizeof(clientaddr);
+        pthread_mutex_lock(&lock);
+        int *clientfd=(int *)malloc(sizeof(int));
+        *clientfd=accept(listen_fd,(struct sockaddr *)&clientaddr,&clientaddrlen);
+        client++;
+        pthread_mutex_unlock(&lock);
+        printf("client connected %d:\n",client);
+        if(client==1)
+        {
+            if(pthread_create(&client1,NULL,client_1,clientfd)!=0){
+                perror("pthread_create() error\n");
+                free(clientfd);
+                client--;
+            }
+        }
+        else if(client==2){
+            if(pthread_create(&client2,NULL,client_2,clientfd)!=0){
+                perror("pthrea_create() error\n");
+                free(clientfd);
+                client--;
+            }
+        }
+        else if(client==3){
+            if(pthread_create(&client3,NULL,client_3,clientfd)!=0){
+                perror("pthrea_create() error\n");
+                free(clientfd);
+                client--;
+            }
+            break;
+        }
+
     }
-	if (pthread_join(buttonThread, NULL) != 0)
-    {
-        fprintf(stderr, "Failed to join button thread.\n");
-        return 4;
-    }
+////////////////////////////////////////////////////////////////
+
+	
 
     // Main thread can perform other tasks or wait for threads to finish
 
     // Wait for the button thread to finish
    
-
-    // Wait for the LCD thread to finish
-    if (pthread_join(lcdThread, NULL) != 0)
+    ////////////////////////////////////////////////////////////////////////////
+    if (pthread_join(client1, NULL) != 0)
     {
-        fprintf(stderr, "Failed to join LCD thread.\n");
+        fprintf(stderr, "Failed to join client 1 thread.\n");
         return 4;
-    }
+    } 
+    if (pthread_join(client2, NULL) != 0)
+    {
+        fprintf(stderr, "Failed to join client 2 thread.\n");
+        return 4;
+    } 
+    if (pthread_join(client3, NULL) != 0)
+    {
+        fprintf(stderr, "Failed to join client 3 thread.\n");
+        return 4;
+    } 
 
 	if (-1 == GPIOUnexport(BUTTON4)||-1 == GPIOUnexport(BUTTON1)||-1==GPIOUnexport(BUTTON2)||-1==GPIOUnexport(BUTTON3))
 		return(1);
