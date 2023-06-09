@@ -23,6 +23,13 @@
     - opencv를 이용하여 영상처리
 4. 환경측정 파이: 온습도와 조도를 측정하여 사용자의 공부 환경이 쾌작한지 측정하고 피드백
 
+### Signal 정리
+- <span style="color:red"> RED: 자세 불량 확인 </span>
+- <span style="color:yellow"> YELLOW: 집중 확인 </span>
+- <span style="color:white"> WHITE: 조도 확인 </span>
+- <span style="color:blue"> BLUE: 온습도 확인 </span>
+
+### 전체 구성
 * server: LCD/LED 파이
 * client: 카메라, 초음파/압력, 온습도/조도 파이
 <img width="600" alt="img1" src="./img/raspi_communication.PNG">
