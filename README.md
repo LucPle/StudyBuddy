@@ -1,7 +1,7 @@
 # StudyBuddy
 
 ## 2023 Spring System Programming and Practice Team Project: StudyBuddy
-* 시스템 프로그래밍 및 실습: Raspberry Pi 환경에서 Sensor – Actuator를 이용하는 프로그램 개발
+* 프로젝트 개요: Raspberry Pi 환경에서 Linux의 functions를 활용하여 Sensor – Actuator를 이용하는 프로그램 개발
 * 프로젝트 기간: 2023.05.01 ~ 2023.06.12
 * 프로젝트 이름: StudyBuddy
 * 프로젝트 목표: 사용자의 학습 환경을 지속적으로 피드백하는 프로그램 제작 
