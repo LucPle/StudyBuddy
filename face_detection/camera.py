@@ -30,7 +30,7 @@ def camera_module():
         cv2.imshow('result', frame)
         cv2.waitKey(1)
 
-        # send ret
+        # send status
         s.send(str(len(faces)).encode('utf-8'))
 
         # Receive data 
