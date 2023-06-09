@@ -1,9 +1,10 @@
+import sys
 import socket
 import cv2
 
 # socket settings
-HOST = '192.168.104.5'
-PORT = 3000
+HOST = sys.argv[1]
+PORT = int(sys.argv[2])
 
 # opencv settings
 xml = 'haarcascade_frontalface_default.xml'
