@@ -2,6 +2,11 @@ import sys
 import socket
 import cv2
 
+# check argvs
+if len(sys.argv) < 3:
+    print('Usage: python3 <IP> <PORT>')
+    exit(1)
+
 # socket settings
 HOST = sys.argv[1]
 PORT = int(sys.argv[2])
