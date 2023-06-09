@@ -16,6 +16,7 @@
 #include <time.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <pthread.h> // Include the pthread library for multi-threading
 
@@ -51,6 +52,8 @@ int END3=0;
 
 
 int led[4]={26,19,13,6};
+void *lcd_Display(void *arg);
+void *buttonHandler(void *arg);
 
 void*client_1(void*arg){//다인님
     int clientfd=*((int*)arg);
@@ -60,6 +63,7 @@ void*client_1(void*arg){//다인님
     char msg[2];
     while(1){
         if(END1&&state==0){
+            printf("here!\n");
             write(clientfd, endmsg, sizeof(endmsg));
             END1=0;
         }
@@ -68,7 +72,8 @@ void*client_1(void*arg){//다인님
             if(read_len==-1){
                 perror("read() error");
             }
-            if(strcmp(startmsg,"1")==0){
+            printf("1 start: %s\n",startmsg);
+            if(strncmp(startmsg,"1",1)==0){
                 state=1;
                 lcdLoc(LINE1);
                 typeln("Welcome!");
@@ -81,31 +86,33 @@ void*client_1(void*arg){//다인님
                 if (pthread_create(&buttonThread, NULL, buttonHandler, NULL) != 0||pthread_create(&lcdThread, NULL, lcd_Display, NULL)!=0)
                 {
                     fprintf(stderr, "Failed to create button/lcd thread.\n");
-                    return 3;
+                    return NULL;
                 }
                     // Wait for the LCD thread to finish
-                if (pthread_join(lcdThread, NULL) != 0)
+                if (pthread_detach(lcdThread) != 0)
                 {
                     fprintf(stderr, "Failed to join LCD thread.\n");
-                    return 4;
+                    return NULL;
                 }
 	            if (pthread_detach(buttonThread) != 0)
                 {
                     fprintf(stderr, "Failed to join button thread.\n");
-                    return 4;
+                    return NULL;
                 }
             }   
         }
         else if(state){
+            write(clientfd, "3", 2);     
             ssize_t read_len = read(clientfd, msg, sizeof(msg));
+            printf("1: %s\n",msg);
             if(read_len==-1){
                 perror("read() error");
             }
             int light;
-            if(strcmp(msg,"1")==0)
-                light = 1;
-            else
+            if(strcmp(msg,"0")==0)
                 light = 0;
+            else
+                light = 1;
             
             GPIOWrite(led[0], light);
         }
@@ -134,7 +141,9 @@ void*client_2(void*arg){//지영님
             prev=1;
         }
         else if(state&&prev){
+            write(clientfd, startmsg, sizeof(startmsg));
             ssize_t read_len = read(clientfd, msg, sizeof(msg));
+            printf("2: %s\n",msg);
             if(read_len==-1){
                 perror("read() error");
             }
@@ -181,12 +190,14 @@ void*client_3(void*arg){//준서님
             prev=1;
         }
         else if(state&&prev){
+            write(clientfd, startmsg, sizeof(startmsg));
             ssize_t read_len = read(clientfd, msg, sizeof(msg));
+            printf("3: %s\n",msg);
             if(read_len==-1){
                 perror("read() error");
             }
             int light;
-            if(strcmp(msg,"1")==0)
+            if(strcmp(msg,"0")==0)
                 light = 1;
             else
                 light = 0;
@@ -401,7 +412,7 @@ int main(int argc, char *argv[])
 
 	int listen_fd = socket(PF_INET, SOCK_STREAM, 0);
     if(listen_fd == -1){
-        error_handling("socket() error");
+        perror("socket() error");
     }
     struct sockaddr_in serv_addr; 
     memset(&serv_addr, 0 , sizeof(serv_addr));
@@ -410,16 +421,16 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(atoi(argv[1]));
 
     if(bind(listen_fd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1){
-        error_handling("bind() error");
+        perror("bind() error");
     }
     if(listen(listen_fd,SOMAXCONN)==-1){
-        error_handling("listen() error");
+       perror("listen() error");
     }
 
-	if (-1 == GPIOExport(BUTTON4)|| -1 == GPIOExport(BUTTON1)||-1==GPIOExport(BUTTON2)||-1==GPIOExport(BUTTON3))
+	if (-1 == GPIOExport(BUTTON4)|| -1 == GPIOExport(BUTTON1)||-1==GPIOExport(BUTTON2)||-1==GPIOExport(BUTTON3)||-1==GPIOExport(led[0])||-1==GPIOExport(led[1])||-1==GPIOExport(led[2])||-1==GPIOExport(led[3]))
 		return(1);
 
-	if (-1 == GPIODirection(BUTTON4, IN)|| -1 == GPIODirection(BUTTON1, IN)||-1 == GPIODirection(BUTTON2, IN)||-1 == GPIODirection(BUTTON3, IN))
+	if (-1 == GPIODirection(BUTTON4, IN)|| -1 == GPIODirection(BUTTON1, IN)||-1 == GPIODirection(BUTTON2, IN)||-1 == GPIODirection(BUTTON3, IN)||-1 == GPIODirection(led[0], OUT)||-1 == GPIODirection(led[1], OUT)||-1 == GPIODirection(led[2], OUT)||-1 == GPIODirection(led[3], OUT))
 		return(2);
 
     lcd_init(); 
@@ -483,7 +494,7 @@ int main(int argc, char *argv[])
         return 4;
     } 
 
-	if (-1 == GPIOUnexport(BUTTON4)||-1 == GPIOUnexport(BUTTON1)||-1==GPIOUnexport(BUTTON2)||-1==GPIOUnexport(BUTTON3))
+	if (-1 == GPIOUnexport(BUTTON4)||-1 == GPIOUnexport(BUTTON1)||-1==GPIOUnexport(BUTTON2)||-1==GPIOUnexport(BUTTON3)||-1 == GPIOUnexport(led[0])||-1 == GPIOUnexport(led[1])||-1 == GPIOUnexport(led[2])||-1 == GPIOUnexport(led[3]))
 		return(1);
 
 	return(0);
