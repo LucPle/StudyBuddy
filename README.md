@@ -6,7 +6,14 @@
 * 프로젝트 이름: StudyBuddy
 * 프로젝트 목표: 사용자의 학습 환경을 지속적으로 피드백하는 프로그램 제작 
 
-## System Configuration
+## StudyBuddy
+  1. 사용자가 의자에 앉으면, 타이머로 원하는 시간을 설정한다.
+  2. 타이머를 시작하면 지속적으로 사용자의 착석 자세를 트래킹하고, 주변환경을 피드백한다.
+  3. 문제가 있는 경우 LED로 즉각적인 피드백을 표시하여 교정 혹은 개선할 수 있도록 도움을 준다.
+  4. 타이머가 끝나면 소켓을 닫고 통신을 종료한다.
+ 
+* server: LCD/LED Pi
+* client: 카메라, 초음파/압력, 온습도/조도 pi
 <img width="600" alt="img1" src="./img/raspi_communication.PNG">
 
 ## 회의 내용
@@ -59,6 +66,7 @@
 * server - client 소켓 정리
 * server에서 thread를 3개 열어서 초음파, 카메라, 온습도/조도와 소켓 통신
 * C - Python간 통신 방법 정리
+* 카메라 - opencv + openpose (MobileNet기반) 시도
 
 ### 6/9 회의
 * 구현 영상 촬영
