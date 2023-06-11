@@ -21,7 +21,7 @@
     - 초음파 센서는 4개 사용 (의자의 좌우-상체, 의자-허리, 책상-상체 간의 간격 측정)
 3. 얼굴인식 파이: 카메라 센서로부터 실시간 영상을 입력받고, 사용자가 공부에 집중하고 있는지 확인하고 피드백
     - opencv를 이용하여 영상처리
-4. 환경측정 파이: 온습도와 조도를 측정하여 사용자의 공부 환경이 쾌작한지 측정하고 피드백
+4. 환경측정 파이: 온습도와 조도를 측정하여 사용자의 공부 환경이 쾌적한지 측정하고 피드백
 
 ### Signal 정리
 - <span style="color:red"> RED: 자세 불량 확인 </span>
@@ -33,6 +33,27 @@
 * server: LCD/LED 파이
 * client: 카메라, 초음파/압력, 온습도/조도 파이
 <img width="600" alt="img1" src="./img/raspi_communication.PNG">
+
+## 컴파일 방법
+* 타이머 파이 (lcd 폴더 내 gpio.c, gpio.h, lcd.c, lcd.h, lcd_pi.c)
+  ```C
+  gcc -o lcd * -lpthread -lwiringPi
+  ./lcd [Port 번호]
+  ```
+* 자세측정 파이
+  ```C
+  gcc -o ultrasonic_wave ultrasonic_wave.c -lpthread
+  ./ultrasonic_wave [IP주소] [Port 번호]
+  ```
+* 환경측정 파이
+  ```C
+  gcc -o use_socket use_socket.c -lpthread -lwiringPi
+  ./use_socket [IP주소] [Port 번호]
+  ```
+* 얼굴인식 파이
+  ```Python3
+  python3 camera.py [IP주소] [Port 번호]
+  ```
 
 ## 회의 내용
 
